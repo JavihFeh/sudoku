@@ -66,6 +66,9 @@ imp_sudoku MACRO matriz
         MOV DL, matriz[BX][DI]
         INT 21h
         INC DI
+        Mov ah,09
+        Lea dx,msg2
+        INT 21h
         espaco
         pula:
     loop imp_matriz
@@ -73,10 +76,15 @@ imp_sudoku MACRO matriz
     CMP BX,72
     JE fim
     ADD BX,9
+    Mov ah,09
+    Lea dx ,msg3
+    INT 21h 
     JMP volta
     fim:
 ENDM 
 .data
+    msg2 DB  OC4H , OC5H , 18 DUP (OC4H), '$'
+    msg3 DB  OB3H , '$'
     go DB 10,'Game over! Suas vidas acabaram...$'
     vida_loss DB 'Voce perdeu uma vida! $'
     msg_vida DB 'Vidas: '
@@ -121,9 +129,10 @@ MAIN PROC
     LIMPA_TELA
 
     MOV AH ,09
-
     LEA DX,MSG1
     INT 21h
+
+  pula_linha 
 
     LEA DX,msg_dif
     INT 21h
@@ -166,6 +175,7 @@ MAIN PROC
 MAIN ENDP
 
 IMPRESSAO PROC
+    PUSHREG
     pula_linha
     TEST AL, 1
     JZ dificil
@@ -173,6 +183,7 @@ IMPRESSAO PROC
     dificil:
     imp_sudoku D
     ret_imp:
+    POPREG 
     RET
 IMPRESSAO ENDP
 
