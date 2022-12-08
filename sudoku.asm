@@ -66,11 +66,35 @@ ENDM
     msg1  DB  10,13,'             WELCOME SUDOKU         ' ,10,13,'$'
     msg_dif DB 'Qual dificuldade?',10,'1-Normal 2-Dificil',10,'$'
     DIFICULDADE DB '2$'
-    ;Siglas:
-    ;D - Dificil
-    ;N - Normal
-    ;R - Reposta
-  D 
+    
+  DR      DB 0,201,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,187
+          DB 0,186,'5',32,'3',32,'?',32,179,32,'?',32,'7',32,'?',32,179,32,'?',32,'?',32,'?',32,186
+          DB 0,186,'6',32,'?',32,'?',32,179,32,'1',32,'9',32,'5',32,179,32,'X',32,'X',32,'X',32,186
+          DB 0,186,'X','9','8',179,'X','X','X',179,'X','6','X',186
+          DB 0,186,196,196,196,179,196,196,196,179,196,196,196,186
+          DB 0,186,'8','X','X',179,'X','6','X',179,'X','X','3',186
+          DB 0,186,'4','X','X',179,'8','X','3',179,'X','X','1',186
+          DB 0,186,'7','X','X',179,'X','2','X',179,'X','X','6',186
+          DB 0,186,196,196,196,179,196,196,196,179,196,196,196,186
+          DB 0,186,'X','6','X',179,'X','X','X',179,'2','8','X',186
+          DB 0,186,'X','X','X',179,'4','1','9',179,'X','X','5',186
+          DB 0,186,'X','X','X',179,'X','8','X',179,'X','7','9',186
+          DB 0,200,205,205,205,205,205,205,205,205,205,205,205,188
+
+        
+  D       DB 0,201,205,205,205,205,205,205,205,205,205,205,205,187
+          DB 0,186,'X','X','X',179,'8','X','X',179,'X','3','2',186
+          DB 0,186,'X','8','1',179,'3','7','X',179,'X','X','X',186
+          DB 0,186,'6','X','3',179,'X','X','X',179,'1','X','8',186
+          DB 0,186,196,196,196,179,196,196,196,179,196,196,196,186
+          DB 0,186,'5','9','X',179,'4','X','X',179,'3','8','X',186
+          DB 0,186,'X','X','6',179,'5','X','X',179,'X','X','X',186
+          DB 0,186,'7','X','8',179,'X','2','X',179,'X','X','5',186
+          DB 0,186,196,196,196,179,196,196,196,179,196,196,196,186
+          DB 0,186,'X','X','X',179,'X','5','4',179,'2','X','X',186
+          DB 0,186,'X','X','X',179,'X','X','X',179,'5','X','X',186
+          DB 0,186,'4','2','5',179,'X','X','X',179,'8','1','7',186
+          DB 0,200,205,205,205,205,205,205,205,205,205,205,205,188
 .code
 MAIN PROC
     MOV AX, @data
@@ -146,62 +170,8 @@ IMPRESSAO PROC
     pula_linha
     xor bx,bx         ; zera SI e BX para iniciar os apontadores da matriz
     xor si,si      
-    lea bx,D
-    
-    mov ah,09         ;exibe mensagem na tela
-    lea dx,msg4      
-    int 21h
+    lea dx,D
 
-    pula_linha               ;macro de pular linha
-
-     mov ah,09        ; exibe mensagem de barra horizontal na tela
-    lea dx,msg2
-    int 21h
-
-    pula_linha               ; macro de pular linha
-
-    mov ch,31h        ; exibe numero da linha
-    mov dl,ch
-    int 21h
-
-    mov ah,09 
-    lea dx,msg3       ;exibe mensagem de barra vertical na tela
-    int 21h
-
-    mov cl,9          ;inicia contador de linhas e colunas
-    mov di,9
-    xor bx,bx
-    volta:
-    mov ah,02         ; exibe numero localizado na posiçao da matriz apontada por SI e BX
-    mov dl,matriz[bx][si]
-    int 21H
-
-    espaco            ; macro de espaçamento 
-
-    inc si            ;incrementa SI para exibir o proximo numero da linha
-    dec di            ;decrementa DI até todos os elementos da linha serem exebidos
-    jnz volta         ;quando DI for igual a zero iniciar processo de ir para a proxima linha
-
-    pula_linha               ;macro de pular linha
-
-    xor si,si         ;zera SI para voltar para o primeiro elemento da linha
-    mov di,9          ;adiciona o numero de colunas
-    add bx,9          ;adiciona em bx o numero de colunas,para ir para proxima linha
-    add ch,01h        ;aumenta o numero da coluna em 1
-    cmp ch,3Ah        ;checa se o numero da coluna é maior que 9
-    je fim            ; se o numero da coluna é maior que 9 pula para o RET
-
-    mov ah,02         ;exibe numero da linha
-    mov dl,ch
-    int 21h
-
-    mov ah,09         ; exibe mensagem de barra vertical na tela
-    lea dx,msg3
-    int 21h
-    loop volta         ;repete prcesso até serem exibidas todas as linhas
-
-    fim:
-    RET
     POPREG 
     RET
 IMPRESSAO ENDP
