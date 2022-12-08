@@ -111,8 +111,30 @@ MAIN PROC
     LEA DX,msg_dif
     INT 21h
 
-    MOV AH,07
+    pula_linha
+
+    MOV AH,01
     INT 21h
+    Mov BH,AL
+    pula_linha
+   
+    
+    cmp bh,32h       ; verifica a dificuldade, se for dificil (2) se não ele salta
+    jne pula
+    
+    
+   
+    pula:
+    A:
+    mov ax,3
+    int 10h
+    CALL IMPRESSAO   ; chama o proc para imprimir a matriz(Sudoku) na tela
+    CALL PREENCHER   ; chama o procedimento para o usuario manipular a matriz(Sudoku)
+    lea si,D         ; aponta matriz
+    lea di,DR        ; aponta para resposta
+    cmpsb            ; compara matriz e gabarito, retornando ZF
+    jz A             
+    pula_linha         
 
     continuar:
     MOV AH,09
@@ -124,9 +146,6 @@ MAIN PROC
     AND AL, 30h
     INT 21h
 
-    CALL IMPRESSAO
-    CALL PREENCHER
-
     MOV CX,89
     CLD
     LEA DI,D
@@ -135,16 +154,13 @@ MAIN PROC
     JE continuar
 
 
-    MOV AH, 4Ch
-    INT 21h
-
-    fimdejogo:
+    ;fim de jogo
     LIMPA_TELA
     MOV AH,09
     LEA DX, go
     INT 21h
 
-    MOV AH,07
+    Mov ah, 4ch
     INT 21h
 MAIN ENDP
 
