@@ -54,7 +54,7 @@ pula_linha MACRO
 ENDM 
 
 .data
-    msg4 DB  '#', 0B3H ,' 1,2,3,4,5,6,7,8,9 $'
+    msg4 DB  '#', 0B3H ,' 1 2 3 4 5 6 7 8 9$'
     msg2 DB  0C4H , 0C5H , 18 DUP (0C4H), '$'
     msg3 DB  0B3H , '$'
     go DB 10,'Game over! Suas vidas acabaram...$'
