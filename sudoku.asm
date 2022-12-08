@@ -1,15 +1,12 @@
 .model small
-LIMPA_TELA MACRO
-  Mov Ah,00    ; tipo de video 
-  Mov AL,03h   ; tipo de texto
-  INT 10h      ; executa a entrada de video 
-;formata modo de video
-  Mov AH,09
-  Mov AL,20h
-  Mov BH,00   ;número de página
-  Mov Bl,0FH   ; atribuição de cor
-  Mov CX,800h
-  INT 10h  ; executa a entrada de video 
+Cor MACRO
+  Mov Ah,06h   ; funcao para mudar a cor
+  XOR AL,AL
+  XOR CX,CX
+  Mov DX,184FH 
+  Mov BH,0Bh   ;
+  INT 10h      ; muda a cor do texto 
+
  ENDM
 
 PUSHREG MACRO 
@@ -57,8 +54,9 @@ pula_linha MACRO
 ENDM 
 
 .data
-    msg2 DB  OC4H , OC5H , 18 DUP (OC4H), '$'
-    msg3 DB  OB3H , '$'
+    msg4 DB  '#', 0B3H ,' 1,2,3,4,5,6,7,8,9 $'
+    msg2 DB  0C4H , 0C5H , 18 DUP (0C4H), '$'
+    msg3 DB  0B3H , '$'
     go DB 10,'Game over! Suas vidas acabaram...$'
     vida_loss DB 'Voce perdeu uma vida! $'
     msg_vida DB 'Vidas: '
@@ -100,7 +98,7 @@ MAIN PROC
     MOV DS, AX
     MOV ES, AX
 
-    LIMPA_TELA
+    Cor
 
     MOV AH ,09
     LEA DX,MSG1
@@ -132,7 +130,7 @@ MAIN PROC
     CALL PREENCHER   ; chama o procedimento para o usuario manipular a matriz(Sudoku)
     lea si,D         ; aponta matriz
     lea di,DR        ; aponta para resposta
-    cmpsb            ; compara matriz e gabarito, retornando ZF
+    cmpsb            ; compara matriz e resposta, retornando ZF
     jz A             
     pula_linha         
 
@@ -153,9 +151,9 @@ MAIN PROC
     REPNE SCASB
     JE continuar
 
-
+    pula_linha 
     ;fim de jogo
-    LIMPA_TELA
+    Cor
     MOV AH,09
     LEA DX, go
     INT 21h
@@ -167,7 +165,64 @@ MAIN ENDP
 IMPRESSAO PROC
     PUSHREG
     pula_linha
+    xor bx,bx         ; zera SI e BX para iniciar os apontadores da matriz
+    xor si,si      
+    lea bx,D
+    
+    mov ah,09         ;exibe mensagem na tela
+    lea dx,msg4      
+    int 21h
 
+    pula_linha               ;macro de pular linha
+
+     mov ah,09        ; exibe mensagem de barra horizontal na tela
+    lea dx,msg2
+    int 21h
+
+    pula_linha               ; macro de pular linha
+
+    mov ch,31h        ; exibe numero da linha
+    mov dl,ch
+    int 21h
+
+    mov ah,09 
+    lea dx,msg3       ;exibe mensagem de barra vertical na tela
+    int 21h
+
+    mov cl,9          ;inicia contador de linhas e colunas
+    mov di,9
+    xor bx,bx
+    volta:
+    mov ah,02         ; exibe numero localizado na posiçao da matriz apontada por SI e BX
+    mov dl,matriz[bx][si]
+    int 21H
+
+    espaco            ; macro de espaçamento 
+
+    inc si            ;incrementa SI para exibir o proximo numero da linha
+    dec di            ;decrementa DI até todos os elementos da linha serem exebidos
+    jnz volta         ;quando DI for igual a zero iniciar processo de ir para a proxima linha
+
+    pula_linha               ;macro de pular linha
+
+    xor si,si         ;zera SI para voltar para o primeiro elemento da linha
+    mov di,9          ;adiciona o numero de colunas
+    add bx,9          ;adiciona em bx o numero de colunas,para ir para proxima linha
+    add ch,01h        ;aumenta o numero da coluna em 1
+    cmp ch,3Ah        ;checa se o numero da coluna é maior que 9
+    je fim            ; se o numero da coluna é maior que 9 pula para o RET
+
+    mov ah,02         ;exibe numero da linha
+    mov dl,ch
+    int 21h
+
+    mov ah,09         ; exibe mensagem de barra vertical na tela
+    lea dx,msg3
+    int 21h
+    loop volta         ;repete prcesso até serem exibidas todas as linhas
+
+    fim:
+    RET
     POPREG 
     RET
 IMPRESSAO ENDP
