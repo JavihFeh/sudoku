@@ -56,32 +56,6 @@ pula_linha MACRO
     INT 21h
 ENDM 
 
-imp_sudoku MACRO matriz
-    XOR BX,BX
-    volta:
-    XOR DI,DI
-    MOV CX,9
-    imp_matriz:
-        MOV AH,02
-        MOV DL, matriz[BX][DI]
-        INT 21h
-        INC DI
-        Mov ah,09
-        Lea dx,msg2
-        INT 21h
-        espaco
-        pula:
-    loop imp_matriz
-    pula_linha
-    CMP BX,72
-    JE fim
-    ADD BX,9
-    Mov ah,09
-    Lea dx ,msg3
-    INT 21h 
-    JMP volta
-    fim:
-ENDM 
 .data
     msg2 DB  OC4H , OC5H , 18 DUP (OC4H), '$'
     msg3 DB  OB3H , '$'
@@ -177,12 +151,7 @@ MAIN ENDP
 IMPRESSAO PROC
     PUSHREG
     pula_linha
-    TEST AL, 1
-    JZ dificil
-    JMP ret_imp
-    dificil:
-    imp_sudoku D
-    ret_imp:
+
     POPREG 
     RET
 IMPRESSAO ENDP
