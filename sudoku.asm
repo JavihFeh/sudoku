@@ -1,3 +1,4 @@
+TITTLE sudoku_22896419_22900229
 .model small
 LIMPA_TELA MACRO
   Mov Ah,00    ; tipo de video 
