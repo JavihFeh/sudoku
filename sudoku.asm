@@ -10,69 +10,85 @@ LIMPA_TELA MACRO
   Mov Bl,0FH   ; atribuição de cor
   Mov CX,800h
   INT 10h  ; executa a entrada de video 
- ENDM
+ENDM
+
+perdeu_vida MACRO
+    DEC vidas           ; Decrementa uma vida
+    pula_linha          ; Macro 'pula_linha'
+    MOV AH, 09          ;
+    LEA DX, vida_loss   ; Imprime a mensagem de vida perdida
+    INT 21h             ;
+
+    MOV AH,07           ;
+    INT 21h             ; Entrada do usuario para a mensagem não se perder
+
+    CMP vidas,31h       ; 
+    JGE encerrar        ; Caso ainda sobrar vidas apenas continua a execução do programa
+    JMP fimdejogo       ; Caso não vai para a mensagem de derrota
+ENDM
+
+horizontal MACRO
+    MOV AH,09           ;
+    LEA DX,hor          ; Imprime as barras horizontais
+    INT 21h             ;
+ENDM
+
+vertical MACRO
+    MOV AH,02           ;
+    MOV DL,179          ; Imprime a barra vertical
+    INT 21h             ;
+ENDM
+
+COR MACRO
+    MOV AH,06h          ;
+    XOR AL,AL           ;
+    XOR CX,CX           ;
+    MOV DX,184Fh        ; Muda a cor do programa para azul ciano
+    MOV BH,0Bh          ;
+    INT 10h             ;
+ENDM
 
 PUSHREG MACRO 
-  PUSH AX
-  PUSH BX
-  PUSH CX
-  PUSH DX
-  PUSH SI
+  PUSH AX               ;
+  PUSH BX               ;
+  PUSH CX               ; Da push nos registradores para salvar o conteudo
+  PUSH DX               ;
+  PUSH SI               ;
 ENDM
 
 POPREG MACRO
-   POP SI
-   POP DX
-   POP CX
-   POP BX
-   POP AX
+   POP SI               ;
+   POP DX               ;
+   POP CX               ; Da pop nos registradores para salvar o conteudo
+   POP BX               ;
+   POP AX               ;
 ENDM
 
 espaco MACRO
-    MOV AH,02
-    MOV DL,32
-    INT 21h
+    MOV AH,02           ;
+    MOV DL,32           ; Escreve um espaço
+    INT 21h             ;
 ENDM 
-
-; barra MACRO
-;     MOV AH,02
-;     MOV DL,124
-;     INT 21h
-; ENDM 
-
-; tracejado MACRO
-;     MOV AH,09
-;     LEA DX, traco
-;     INT 21h
-
-;     MOV AH,02
-;     MOV DL,10
-;     INT 21h
-; ENDM 
 
 pula_linha MACRO
-    MOV AH,02
-    MOV DL,10
-    INT 21h
+    MOV AH,02           ;
+    MOV DL,10           ; Pula uma linha
+    INT 21h             ;
 ENDM 
 
-imp_sudoku MACRO matriz
-    
-ENDM 
 .data
-    win DB 'Parabens! Voce completou o sudoku... $'
-    msg2 DB  0C4H,22 DUP (0C4H),'$'
-    msg3 DB  0B3H,'$'
+    hor DB 20 DUP(205),'$'
+    win DB 'Parabens, voce completou o sudoku! $'
     go DB 10,'Game over! Suas vidas acabaram...$'
-    vida_loss DB 'Voce perdeu uma vida! $'
+    vida_loss DB 'Resposta errada! Voce perdeu uma vida... $'
     msg_vida DB 'Vidas: $'
     vidas DB '3$'
-    msg_erro DB 'Erro!$'
+    msg_erro DB 'Voce nao pode sobreescrever numeros!$'
     res DB 'Qual a resposta? $'
-    msg_lin DB 'Qual a linha? $'
+    msg_lin DB 10,'Qual a linha? $'
     msg_col DB 'Qual a coluna? $'
     traco DB 12 DUP(95),'$'
-    msg1  DB  10,13,'             WELCOME SUDOKU         ' ,10,13,'$'
+    wel  DB  10,13,'             WELCOME TO SUDOKU         ' ,10,13,'$'
     msg_dif DB 'Qual dificuldade?',10,'1-Normal 2-Dificil',10,'$'
     DIFICULDADE DB '2$'
     ;Siglas:
@@ -121,253 +137,267 @@ ENDM
         DB '?','?','?','?','8','?','?','7','9$'
 .code
 MAIN PROC
-    MOV AX, @data
-    MOV DS, AX
-    MOV ES, AX
+    MOV AX, @data   ;
+    MOV DS, AX      ;   Inicializa segmento de dados
+    MOV ES, AX      ;
 
-    LIMPA_TELA
+    LIMPA_TELA      ; Chama macro 'LIMPA_TELA'
+    COR             ; Chama macro 'COR'
 
-    MOV AH,09
-    LEA DX,MSG1
-    INT 21h
+    MOV AH,09       ;
+    LEA DX,wel      ; Imprime mensagem de entrada
+    INT 21h         ;
 
-    pula_linha 
+    pula_linha      ; Chama macro 'pula_linha'
 
-    MOV AH,09
-    LEA DX,msg_dif
-    INT 21h
+    MOV AH,09       ;
+    LEA DX,msg_dif  ; Imprime mensagem de dificuldade
+    INT 21h         ;
 
-    MOV AH,07
-    INT 21h
+    MOV AH,07           ;
+    INT 21h             ; Recebe entrada do usuario para dificuldade
+    MOV dificuldade,AL  ; E seta na variavel 'dificuldade'
 
-    MOV dificuldade,AL
+    LIMPA_TELA          ; Chama macro 'LIMPA_TELA'
 
-    continuar:
-    MOV AH,09
-    LEA DX,msg_vida
-    INT 21h
+    continuar:          ; label 'continuar'
+    CALL IMPRESSAO      ; Chama o procedimento de impressão
+    CALL PREENCHER      ; Chama o procedimento para preencher
 
-    MOV AH,09
-    LEA DX,vidas
-    INT 21h
+    CMP dificuldade, 31h    ; 
+    JNE vef_d               ; Verifica se a dificuldade é normal ou dificil
 
-    CALL IMPRESSAO
-    CALL PREENCHER
+    MOV CX,89               ;
+    CLD                     ;
+    LEA DI,N                ; Lê todo o banco para ver se ainda há '?' ou seja espaços não preenchidos
+    MOV AL,'?'              ;
+    REPNE SCASB             ;
+    JE continuar            ; Se houver continua o programa
+    JMP ganhou              ; Senão pula para a mensagem de vitoria
 
-    CMP dificuldade, 31h
-    JNE vef_d
-    MOV CX,89
-    CLD
-    LEA DI,N
-    MOV AL,'?'
-    REPNE SCASB
-    JE continuar
+    vef_d:                  ; label de verificação do dificil
+    MOV CX,89               ;
+    CLD                     ;
+    LEA DI,D                ; Lê todo o banco para ver se ainda há '?' ou seja espaços não preenchidos
+    MOV AL,'?'              ;
+    REPNE SCASB             ;
+    JE continuar            ; Se houver continua o programa
 
-    vef_d:
-    MOV CX,89
-    CLD
-    LEA DI,D
-    MOV AL,'?'
-    REPNE SCASB
-    JE continuar
+    ganhou:                 ; label 'ganhou'
+    MOV AH,09               ;
+    LEA DX, win             ; Imprime mensagem de vitoria
+    INT 21h                 ;
 
-    MOV AH,09
-    LEA DX, win
-    INT 21h
+    MOV AH, 4Ch             ;
+    INT 21h                 ; Finaliza o programa
 
-    MOV AH, 4Ch
-    INT 21h
+    fimdejogo:              ; label 'fimdejogo'
+    LIMPA_TELA              ; Chama macro 'LIMPA_TELA'
 
-    fimdejogo:
-    LIMPA_TELA
-    MOV AH,09
-    LEA DX, go
-    INT 21h
+    MOV AH,09               ;
+    LEA DX, go              ; Imprime a mensagem de game over
+    INT 21h                 ;
 
-    MOV AH,07
-    INT 21h
+    MOV AH,07               ; 
+    INT 21h                 ; Entrada do usuario só para aparecer a mensagem antes de finalizar o programa
 
-    MOV AH, 4Ch
-    INT 21h
+    MOV AH, 4Ch             ;
+    INT 21h                 ; Finaliza o programa
 MAIN ENDP
 
-IMPRESSAO PROC
-    PUSHREG
-    pula_linha
-    CMP dificuldade, 31h
-    JNE dificil
-    JMP normal
-    dificil:
-    XOR BX,BX
-    voltad:
-    ; MOV AH,09
-    ; LEA DX, msg2
-    ; INT 21h
-    pula_linha
-    ; MOV AH,09
-    ; LEA DX,msg3
-    ; INT 21h
-    XOR DI,DI
-    MOV CX,9
-    imp_dificil:
-        MOV AH,02
-        MOV DL, D[BX][DI]
-        INT 21h
-        INC DI
-        ; MOV AH,09
-        ; LEA DX,msg3
-        ; INT 21h
-        espaco
-    loop imp_dificil
-    pula_linha
-    CMP BX,72
-    JE fim
-    ADD BX,9
-    JMP voltad
-    pula_linha
+IMPRESSAO PROC              ; Procedimento de impressão
+    PUSHREG                 ; Da push nos registradores
+    COR                     ; Chama macro 'COR'
 
-    normal:
-    XOR BX,BX
-    voltan:
-    ; MOV AH,09
-    ; LEA DX, msg2
-    ; INT 21h
-    pula_linha
-    ; MOV AH,09
-    ; LEA DX,msg3
-    ; INT 21h
-    XOR DI,DI
-    MOV CX,9
+    MOV AH,09               ;
+    LEA DX, msg_vida        ; Imprime a mensagem de vida
+    INT 21h                 ;
+    LEA DX, vidas           ; E a quantidade de vida
+    INT 21h                 ;
+
+    pula_linha              ; Chama macro 'pula_linha'
+
+    CMP dificuldade, 31h    ; Verifica a dificuldade normal
+    JE normal               ; Se não for pula para a normal
+    XOR BX,BX               ; Limpa o registrador BX
+    voltad:                 ; label volta dificil
+    pula_linha              ; Chama macro 'pula_linha'
+    XOR DI,DI               ; Limpa registrador DI
+    MOV CX,9                ; Seta loop para 9
+    imp_dificil:            ; label imprimir dificil
+
+        CMP CX,3            ;
+        JNE vertd1          ; Verifica se está na linha 3 para imprimir a barra vertical
+        vertical            ;
+        vertd1:             ; Se não estiver apenas pula
+
+        CMP CX,6            ;
+        JNE vertd2          ; Verifica se está na linha 6 para imprimir a barra vertical
+        vertical            ;
+        vertd2:             ; Se não estiver apenas pula
+
+        MOV AH,02           ;
+        MOV DL,D[BX][DI]    ; Imprime o numero referente a matriz
+        INT 21h             ;
+        INC DI              ; Incrimenta a coluna
+        espaco              ; Escreve um espaço
+    loop imp_dificil        ; fecha o loop de imprimir o sudoku dificil
+
+    CMP BX,18               ;
+    JNE hord1               ; Verifica se está na linha 18 para imprimir a barra horizontal e pular uma linha
+    pula_linha              ;
+    horizontal              ;
+    hord1:                  ; Se não estiver apenas pula
+
+    CMP BX,45               ;
+    JNE hord2               ; Verifica se está na linha 45 para imprimir a barra horizontal e pular uma linha
+    pula_linha              ;
+    horizontal              ;
+    hord2:                  ; Se não estiver apenas pula
+
+    CMP BX,72               ; Verifica se chegou ao final da matriz
+    JE fim                  ; Se sim pula para o final
+    ADD BX,9                ; Se não adiciona 9 na linha
+    JMP voltad              ; E continua a imprimir
+    pula_linha              ; Macro 'pula_linha'
+
+    normal:                 ; label 'normal'
+    XOR BX,BX               ; Limpa o registrador BX
+    voltan:                 ; label 'voltan'
+    pula_linha              ; Macro 'pula_linha'
+    XOR DI,DI               ; Limpa o registrador DI
+    MOV CX,9                ; Seta o loop em 9
     imp_normal:
-        MOV AH,02
-        MOV DL, N[BX][DI]
-        INT 21h
-        INC DI
-        ; MOV AH,09
-        ; LEA DX,msg3
-        ; INT 21h
-        espaco
-    loop imp_normal
-    pula_linha
-    CMP BX,72
-    JE fim
-    ADD BX,9
-    JMP voltan
-    fim:
-    POPREG
-    RET
+        CMP CX,3            ; Verifica se está na linha 3 para imprimir a barra vertical
+        JNE vertn1          ;
+        vertical            ;
+        vertn1:             ; Se não estiver apenas pula
+
+        CMP CX,6            ; Verifica se está na linha 6 para imprimir a barra vertical
+        JNE vertn2          ;
+        vertical            ;
+        vertn2:             ; Se não estiver apenas pula
+
+        MOV AH,02           ;
+        MOV DL,N[BX][DI]    ; Imprime o numero referente a matriz
+        INT 21h             ;
+        INC DI              ; Incrementa a coluna
+        espaco              ; Dá um espaço
+    loop imp_normal         ; fecha o loop de imprimir o sudoku normal
+
+    CMP BX,18               ;
+    JNE horn1               ; Verifica se está na linha 18 para imprimir a barra horizontal e pular uma linha
+    pula_linha              ;
+    horizontal              ;
+    horn1:                  ; Se não apenas pula
+
+    CMP BX,45               ;
+    JNE horn2               ; Verifica se está na linha 45 para imprimir a barra horizontal e pular uma linha
+    pula_linha              ;
+    horizontal              ;
+    horn2:                  ; Se não apenas pula
+
+    CMP BX,72               ; Verifica se está no fim da matriz
+    JE fim                  ; Se sim pula para o fim
+    ADD BX,9                ;
+    JMP voltan              ; Se não apenas acrescenta 9 na linha e reseta o loop
+    fim:                    ; label 'fim'
+    pula_linha              ; Macro 'pula linha'
+    POPREG                  ; Pop nos registradores
+    RET                     ; Sai do procedimento
 IMPRESSAO ENDP
 
 PREENCHER PROC
-    XOR BX,BX
-    MOV AH, 09
-    LEA DX,msg_lin
-    INT 21h
+    XOR BX,BX               ; Limpa o registrador BX
 
-    MOV AH, 01
-    INT 21h
+    MOV AH,09               ;
+    LEA DX,msg_lin          ; Imprime a mensagem de linhas
+    INT 21h                 ;
 
-    XOR AH, AH
-    XOR BX, BX
-    SUB AX, 30h
-    DEC AX
-    MOV BX,9
-    MUL BX
-    MOV BX, AX
+    MOV AH, 01              ;
+    INT 21h                 ; Recebe a entrada do usuario
 
-    pula_linha
+    XOR AH, AH              ;
+    XOR BX, BX              ; Limpa os registradores BX e AH
+    SUB AX, 30h             ; Transforma a entrada do usuario em numero
+    DEC AX                  ; Decrementa em 1 para ficar alinhado com linha da tabela
+    MOV BX,9                ;
+    MUL BX                  ; Multiplica por 9 para entrar no padrão da matriz
+    MOV BX, AX              ; BX recebe o resultado da multiplicação
 
-    MOV AH, 09
-    LEA DX,msg_col
-    INT 21h
+    pula_linha              ; Macro 'pula_linha'
 
-    MOV AH, 01
-    INT 21h
+    MOV AH, 09              ;
+    LEA DX,msg_col          ; Imprime a mensagem de coluna
+    INT 21h                 ;
 
-    XOR AH, AH
-    MOV DI, AX
-    SUB DI,30h
-    DEC DI
+    MOV AH, 01              ;
+    INT 21h                 ; Recebe a entrada do usuario
 
-    pula_linha
+    XOR AH, AH              ;
+    MOV DI, AX              ; DI recebe a entrada do usuario
+    SUB DI,30h              ; Transforma a entrada em numero
+    DEC DI                  ; Decrementa DI para alinha com o parametro da matriz
 
-    CMP dificuldade,31h
-    JNE preen_dif
-    CMP N[BX][DI],63
-    JE cont_pren_nor
-    JMP jmp_erro
+    pula_linha              ; Macro Pula linha
+
+    CMP dificuldade,31h     ; Verifica se a dificuldade é normal
+    JNE preen_dif           ; Caso for dificil pula para a metodo de preencher a matriz dificil
+
+    CMP N[BX][DI],63        ; Compara se o elemento da matriz selecionado é um '?'
+    JE cont_pren_nor        ; Caso for continua para preencher
+    JMP jmp_erro            ; Se não for vai para a mensagem de erro
 
     cont_pren_nor:
-    pula_linha
+    pula_linha              ; Macro 'pula_linha'
 
-    MOV AH,09
-    LEA DX,res
-    INT 21h
+    MOV AH,09               ;
+    LEA DX,res              ; Imprime a mensagem de resultado
+    INT 21h                 ;
 
-    MOV AH,01
-    INT 21h
+    MOV AH,01               ;
+    INT 21h                 ; Recebe a entrada do usuario
 
-    CMP AL,NR[BX][DI]
-    JE sem_erron
-    DEC vidas
-    pula_linha
-    MOV AH, 09
-    LEA DX, vida_loss
-    INT 21h
+    CMP AL,NR[BX][DI]       ; Compara se a entrada do usuario é a correta
+    JE sem_erron            ; Se for vai alterar a matriz
+    perdeu_vida             ; Se não usuario perde uma vida
 
-    MOV AH,07
-    INT 21h
+    sem_erron:              ;
+    MOV N[BX][DI],AL        ; Altera a matriz
+    JMP encerrar            ; E encerra o procedimento
 
-    CMP vidas,0
-    JGE encerrar
-    JMP fimdejogo
-
-    sem_erron:
-    MOV N[BX][DI],AL
-    JMP encerrar
-
-    preen_dif:
-    CMP D[BX][DI],63
-    JNE jmp_erro
+    preen_dif:              ;
+    CMP D[BX][DI],63        ;
+    JNE jmp_erro            ;
     
-    pula_linha
+    pula_linha              ;
 
-    MOV AH,09
-    LEA DX,res
-    INT 21h
+    MOV AH,09               ;
+    LEA DX,res              ;
+    INT 21h                 ;
 
-    MOV AH,01
-    INT 21h
+    MOV AH,01               ;
+    INT 21h                 ;
 
-    CMP AL,DR[BX][DI]
-    JE sem_errod
-    DEC vidas
-    pula_linha
-    MOV AH, 09
-    LEA DX, vida_loss
-    INT 21h
+    CMP AL,DR[BX][DI]       ;
+    JE sem_errod            ;
+    perdeu_vida             ;
 
-    MOV AH,07
-    INT 21h
+    sem_errod:              ;
+    MOV D[BX][DI],AL        ;
+    JMP encerrar            ; Até aqui as instruções se repetem para a matriz do sudoku dificil
 
-    CMP vidas,0
-    JGE encerrar
-    JMP fimdejogo
+    jmp_erro:               ;
+    MOV AH,09               ;
+    LEA DX,msg_erro         ; Imprime a mensagem de erro
+    INT 21h                 ;
 
-    sem_errod:
-    MOV D[BX][DI],AL
-    JMP encerrar
-
-    jmp_erro:
-    MOV AH,09
-    LEA DX, msg_erro
-    INT 21h
+    MOV AH,07               ;
+    INT 21h                 ; Entrada do usuario para a mensagem não se perder
 
     encerrar:
-    LIMPA_TELA
-    RET
+    LIMPA_TELA              ; Macro 'LIMPA_TELA '
+    RET                     ; Encerra o procedimento
 PREENCHER ENDP
-; VERIFICIAR PROC
-; VERIFICAR ENDP
 END MAIN
     
