@@ -31,22 +31,6 @@ espaco MACRO
     INT 21h
 ENDM 
 
-; barra MACRO
-;     MOV AH,02
-;     MOV DL,124
-;     INT 21h
-; ENDM 
-
-; tracejado MACRO
-;     MOV AH,09
-;     LEA DX, traco
-;     INT 21h
-
-;     MOV AH,02
-;     MOV DL,10
-;     INT 21h
-; ENDM 
-
 pula_linha MACRO
     MOV AH,02
     MOV DL,10
@@ -67,7 +51,7 @@ ENDM
     msg_dif DB 'Qual dificuldade?',10,'1-Normal 2-Dificil',10,'$'
     DIFICULDADE DB '2$'
     
-  DR      DB 0,201,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,187
+  JOGOR   DB 0,201,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,205,187
           DB 0,186,'5',32,'3',32,'?',32,179,32,'?',32,'7',32,'?',32,179,32,'?',32,'?',32,'?',32,186
           DB 0,186,'6',32,'?',32,'?',32,179,32,'1',32,'9',32,'5',32,179,32,'X',32,'X',32,'X',32,186
           DB 0,186,'X','9','8',179,'X','X','X',179,'X','6','X',186
@@ -82,7 +66,7 @@ ENDM
           DB 0,200,205,205,205,205,205,205,205,205,205,205,205,188
 
         
-  D       DB 0,201,205,205,205,205,205,205,205,205,205,205,205,187
+  JOGO    DB 0,201,205,205,205,205,205,205,205,205,205,205,205,187
           DB 0,186,'X','X','X',179,'8','X','X',179,'X','3','2',186
           DB 0,186,'X','8','1',179,'3','7','X',179,'X','X','X',186
           DB 0,186,'6','X','3',179,'X','X','X',179,'1','X','8',186
@@ -116,25 +100,25 @@ MAIN PROC
 
     MOV AH,01
     INT 21h
-    Mov BH,AL
-    pula_linha
-   
     
-    cmp bh,32h       ; verifica a dificuldade, se for dificil (2) se não ele salta
-    jne pula
-    
-    
-   
-    pula:
-    A:
-    mov ax,3
-    int 10h
-    CALL IMPRESSAO   ; chama o proc para imprimir a matriz(Sudoku) na tela
+    AND AL,30H
+    CMP AL,1
+    JE JOGO1
+    JMP FIM
+
+    CMP AL,2
+    JE JOGO2
+    JOGO1:
+    CALL IMPRIME 
+
+    JOGO2:
+    CALL IMPRIME 
+
+    LEA BX,JOGO
+    LEA BX,JOGOR
+    CALL IMPRIME   ; chama o proc para imprimir a matriz(Sudoku) na tela
     CALL PREENCHER   ; chama o procedimento para o usuario manipular a matriz(Sudoku)
-    lea si,D         ; aponta matriz
-    lea di,DR        ; aponta para resposta
-    cmpsb            ; compara matriz e resposta, retornando ZF
-    jz A             
+         
     pula_linha         
 
     continuar:
@@ -155,26 +139,38 @@ MAIN PROC
     JE continuar
 
     pula_linha 
-    ;fim de jogo
+    fim de jogo:
     Cor
     MOV AH,09
     LEA DX, go
     INT 21h
-
+    
+    Fim:
     Mov ah, 4ch
     INT 21h
 MAIN ENDP
 
-IMPRESSAO PROC
+IMPRIME PROC
     PUSHREG
     pula_linha
-    xor bx,bx         ; zera SI e BX para iniciar os apontadores da matriz
-    xor si,si      
-    lea dx,D
+    mov ah,02
+        mov cx,linha
 
+    outer:
+        mov di,coluna
+        xor si,si
+    inner:
+        mov dl,[bx][si]
+        int 21H
+        inc si
+        dec DI
+        jnz inner
+        pula_linha 
+        add bx,coluna
+        loop outer
     POPREG 
     RET
-IMPRESSAO ENDP
+IMPRIME ENDP
 
 PREENCHER PROC
     XOR BX,BX
@@ -182,7 +178,7 @@ PREENCHER PROC
     LEA DX,msg_lin
     INT 21h
 
-    MOV AH, 07
+    MOV AH, 01
     INT 21h
 
     XOR AH, AH
@@ -199,7 +195,7 @@ PREENCHER PROC
     LEA DX,msg_col
     INT 21h
 
-    MOV AH, 07
+    MOV AH, 01
     INT 21h
 
     XOR AH, AH
@@ -209,7 +205,7 @@ PREENCHER PROC
 
     pula_linha
 
-    CMP D[BX][DI],63
+    CMP JOGO[BX][DI],63
     JNE jmp_erro
     
     pula_linha
@@ -218,10 +214,10 @@ PREENCHER PROC
     LEA DX,res
     INT 21h
 
-    MOV AH,07
+    MOV AH,01
     INT 21h
 
-    CMP AL,DR[BX][DI]
+    CMP AL,JOGOR[BX][DI]
     JE sem_erro
     SUB vidas,1
     pula_linha
@@ -229,7 +225,7 @@ PREENCHER PROC
     LEA DX, vida_loss
     INT 21h
 
-    MOV AH,07
+    MOV AH,01
     INT 21h
 
     CMP vidas,0
@@ -237,7 +233,7 @@ PREENCHER PROC
     JMP fimdejogo
 
     sem_erro:
-    MOV D[BX][DI],AL
+    MOV JOGO[BX][DI],AL
     JMP encerrar
 
     jmp_erro:
@@ -246,7 +242,7 @@ PREENCHER PROC
     INT 21h
 
     encerrar:
-    LIMPA_TELA
+    Cor
     RET
 PREENCHER ENDP
 ; VERIFICIAR PROC
